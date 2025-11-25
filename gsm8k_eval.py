@@ -97,7 +97,7 @@ CHOICE_STRINGS = ["CORRECT", "INCORRECT", "NOT_ATTEMPTED"]
 CHOICE_LETTER_TO_STRING = dict(zip(CHOICE_LETTERS, CHOICE_STRINGS))
 
 
-class SimpleQAEval(Eval):
+class GSM8KEval(Eval):
     def __init__(
         self,
         grader_model: SamplerBase,
@@ -105,10 +105,10 @@ class SimpleQAEval(Eval):
         n_repeats: int = 1,
         file_path: str | None = None,
     ):
-        # df = pandas.read_csv(
-        #     "https://openaipublic.blob.core.windows.net/simple-evals/simple_qa_test_set.csv"
-        # )
-        df = pandas.read_json(file_path, lines=True)
+        import pandas as pd
+
+        splits = {'train': 'main/train-00000-of-00001.parquet', 'test': 'main/test-00000-of-00001.parquet'}
+        df = pd.read_parquet("hf://datasets/openai/gsm8k/" + splits["test"])
         examples = [row.to_dict() for _, row in df.iterrows()]
         if num_examples:
             assert n_repeats == 1, "n_repeats only supported when max_examples = None"
@@ -143,9 +143,11 @@ class SimpleQAEval(Eval):
                 problem = row.get("question", "")
 
             answer = row.get("answer", "")
-            if type(answer) == list:
-                answer = answer[0]
-
+            # 提取 ####，之后的内容作为answer
+            match = re.search(r"####(.*)", answer, re.DOTALL)
+            if match:
+                answer = match.group(1).strip()
+            
             prompt_messages = [sampler._pack_message(content=problem, role="user")]
             # 这里模型去从 LLM 之中sample出来东西，
             # 一般是本地部署的服务

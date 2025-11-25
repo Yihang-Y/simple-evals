@@ -31,6 +31,7 @@ from .sampler.o_chat_completion_sampler import OChatCompletionSampler
 from .sampler.responses_sampler import ResponsesSampler
 from .simpleqa_eval import SimpleQAEval
 from .hallu_eval import HalluLensEval
+from .gsm8k_eval import GSM8KEval
 
 
 def main():
@@ -76,29 +77,6 @@ def main():
     args = parser.parse_args()
 
     models = {
-        # # Reasoning Models
-        # "o3": ResponsesSampler(
-        #     model="o3-2025-04-16",
-        #     reasoning_model=True,
-        # ),
-        # "o1": OChatCompletionSampler(
-        #     model="o1",
-        # ),
-        # # GPT-4.1 models
-        # "gpt-4.1": ChatCompletionSampler(
-        #     model="gpt-4.1-2025-04-14",
-        #     system_message=OPENAI_SYSTEM_MESSAGE_API,
-        #     max_tokens=2048,
-        # ),
-        # # Claude models:
-        # "claude-3-opus-20240229_empty": ClaudeCompletionSampler(
-        #     model="claude-3-opus-20240229",
-        #     system_message=CLAUDE_SYSTEM_MESSAGE_LMSYS,
-        # ),
-        # "gemini-2.5-flash": GenChatCompletionSampler(
-        #     model="gemini-2.5-flash",
-        #     system_message=OPENAI_SYSTEM_MESSAGE_API,
-        # ),
         "qwen3": VLLMChatCompletionSampler(
             model="Qwen/Qwen3-8B",
             # system_message=OPENAI_SYSTEM_MESSAGE_API,
@@ -136,11 +114,18 @@ def main():
         )
         # Set num_examples = None to reproduce full evals
         match eval_name:
-            case "simpleqa":
+            case "NQ":
                 return SimpleQAEval(
                     grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
+                    file_path="./simple-evals/data/NQ-open.train.jsonl",
                 )
+            case "gsm8k":
+                return GSM8KEval(
+                    grader_model=grading_sampler,
+                    num_examples=10 if debug_mode else num_examples,
+                )
+                
             case "hallu":
                 return HalluLensEval(
                     grader_model=grading_sampler,
@@ -162,8 +147,9 @@ def main():
         evals = {
             eval_name: get_evals(eval_name, args.debug)
             for eval_name in [
-                "simpleqa",
+                "NQ",
                 "hallu",
+                "gsm8k",
             ]
         }
 

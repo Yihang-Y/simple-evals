@@ -169,7 +169,7 @@ class HalluLensEval(Eval):
                 problem = row.get("question", "")
 
             answer = row.get("answer", "")
-            if type(answer) != list:
+            if type(answer) == list:
                 answer = answer[0]
 
             prompt_messages = [sampler._pack_message(content=problem, role="user")]
