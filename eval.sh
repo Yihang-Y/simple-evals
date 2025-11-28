@@ -1,0 +1,1 @@
+python -m simple-evals.simple_evals --model qwen3-8b --eval clamber --debug

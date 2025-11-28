@@ -130,6 +130,9 @@ class SimpleQAEval(Eval):
         sampler_response = self.grader_model(prompt_messages)
         grading_response = sampler_response.response_text
 
+        if "guess" in predicted_answer:
+            return "E"
+        # print(sampler_response.response_text)
         match = re.search(r"(A|B|C)", grading_response)
         return (
             match.group(0) if match else "D"
@@ -168,7 +171,7 @@ class SimpleQAEval(Eval):
                 # Metrics based on grading response
                 is_correct = grade_letter == "A"
                 is_incorrect = grade_letter == "B"
-                is_not_attempted = grade_letter == "C"
+                is_not_attempted = ( grade_letter == "C" or grade_letter == "E" )
             else:
                 # extracted_answer = response_text.strip()
                 is_correct = False
@@ -200,7 +203,7 @@ class SimpleQAEval(Eval):
             )
 
         # Run evaluation and collect results
-        results = common.map_with_progress(fn, self.examples)
+        results = common.map_with_progress(fn, self.examples, num_threads=32)
 
         # Aggregate metrics
         aggregate_metrics = {
