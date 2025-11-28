@@ -34,8 +34,11 @@ from .hallu_eval import HalluLensEval
 from .gsm8k_eval import GSM8KEval
 from .nq_eval import NQEval
 
+from .clamber_eval import ClamberEval
+import dotenv
 
 def main():
+    dotenv.load_dotenv()
     parser = argparse.ArgumentParser(
         description="Run sampling and evaluations using different samplers and evaluations."
     )
@@ -71,12 +74,11 @@ def main():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/data/nfs2/yyh/proactive",
+        default="./simple-evals/output",
         help="Directory to save results",
     )
 
     args = parser.parse_args()
-
     models = {
         "qwen3": VLLMChatCompletionSampler(
             model="Qwen/Qwen3-8B",
@@ -140,6 +142,12 @@ def main():
                 return HalluLensEval(
                     grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
+                )
+            case "clamber":
+                return ClamberEval(
+                    grader_model=grading_sampler,
+                    num_examples=10 if debug_mode else num_examples,
+                    file_path="./simple-evals/data/clamber_benchmark.jsonl"
                 )
             case _:
                 raise Exception(f"Unrecognized eval type: {eval_name}")
