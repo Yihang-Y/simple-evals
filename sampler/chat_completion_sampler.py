@@ -183,9 +183,11 @@ class VLLMChatCompletionSampler(SamplerBase):
         system_message: str | None = None,
         temperature: float = 0.5,
         max_tokens: int = 2048,
+        base_port: int = 8000,
     ):
         self.api_key_name = "VLLM_API_KEY"
-        self.base_url = "http://127.0.0.1:8000/v1"  # please set your VLLM server URL
+        # self.base_url = "http://127.0.0.1:8000/v1"  # please set your VLLM server URL
+        self.base_url = f"http://127.0.0.1:{base_port}/v1"
         self.client = OpenAI(base_url=self.base_url)
         self.model = model
         self.system_message = system_message

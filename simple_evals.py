@@ -32,6 +32,7 @@ from .sampler.responses_sampler import ResponsesSampler
 from .simpleqa_eval import SimpleQAEval
 from .hallu_eval import HalluLensEval
 from .gsm8k_eval import GSM8KEval
+from .nq_eval import NQEval
 
 
 def main():
@@ -79,7 +80,17 @@ def main():
     models = {
         "qwen3": VLLMChatCompletionSampler(
             model="Qwen/Qwen3-8B",
-            # system_message=OPENAI_SYSTEM_MESSAGE_API,
+            system_message="You are a helpful assistant.",
+            temperature=0.5,
+            port = 8000,
+            max_tokens=32000
+        ),
+        "qwen3-sft-v4": VLLMChatCompletionSampler(
+            model="Qwen/Qwen3-8B-SFT-V4",
+            system_message="You are a helpful proactive assistant.",
+            temperature=0.5,
+            port = 8001,
+            max_tokens=32000
         ),
     }
 
@@ -115,7 +126,7 @@ def main():
         # Set num_examples = None to reproduce full evals
         match eval_name:
             case "NQ":
-                return SimpleQAEval(
+                return NQEval(
                     grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
                     file_path="./simple-evals/data/NQ-open.train.jsonl",
@@ -125,7 +136,6 @@ def main():
                     grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
                 )
-                
             case "hallu":
                 return HalluLensEval(
                     grader_model=grading_sampler,
@@ -148,8 +158,8 @@ def main():
             eval_name: get_evals(eval_name, args.debug)
             for eval_name in [
                 "NQ",
-                "hallu",
-                "gsm8k",
+                # "hallu",
+                # "gsm8k",
             ]
         }
 
