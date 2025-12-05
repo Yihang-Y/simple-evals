@@ -33,8 +33,9 @@ from .simpleqa_eval import SimpleQAEval
 from .hallu_eval import HalluLensEval
 from .gsm8k_eval import GSM8KEval
 from .nq_eval import NQEval
-
 from .clamber_eval import ClamberEval
+from .when2call_eval import When2CallEval
+
 import dotenv
 
 def main():
@@ -83,18 +84,18 @@ def main():
         "qwen3": VLLMChatCompletionSampler(
             model="Qwen/Qwen3-8B",
             system_message="You are a helpful assistant.",
-            temperature=0.5,
-            port = 8000,
-            max_tokens=32000
+            temperature=0.0,
+            base_port = 8000,
+            max_tokens=4000
         ),
         "qwen3-sft-v4": VLLMChatCompletionSampler(
             model="Qwen/Qwen3-8B-SFT-V4",
             system_message="You are a helpful proactive assistant.",
-            temperature=0.5,
-            port = 8001,
-            max_tokens=32000
+            temperature=0.0,
+            base_port = 8001,
+            max_tokens=4000
         ),
-    }
+        }
 
     if args.list_models:
         print("Available models:")
@@ -114,6 +115,7 @@ def main():
 
     grading_sampler = GenChatCompletionSampler(
         model="gemini-2.5-flash-lite",
+        # model="gemini-2.5-flash",
         system_message=OPENAI_SYSTEM_MESSAGE_API,
     )
     equality_checker = GenChatCompletionSampler(
@@ -148,6 +150,12 @@ def main():
                     grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
                     file_path="./simple-evals/data/clamber_benchmark.jsonl"
+                )
+            case "when2call":
+                return When2CallEval(
+                    grader_model=grading_sampler, #simple classifying task,gemini-2.5-flash-lite
+                    num_examples=4 if debug_mode else num_examples,
+                    file_path="./simple-evals/data/when2call_test_llm_judge.jsonl"
                 )
             case _:
                 raise Exception(f"Unrecognized eval type: {eval_name}")

@@ -144,6 +144,7 @@ class NQEval(Eval):
             match = re.search(pattern, response_text, re.DOTALL)
             extracted_answer = response_text.strip()
             grade_letter = "D"
+            is_guess = False
             if match:
                 extracted_answer = match.group(1).strip()
                 grade_letter, is_guess = self.grade_sample(
@@ -191,7 +192,7 @@ class NQEval(Eval):
             )
 
         # Run evaluation and collect results
-        results = common.map_with_progress(fn, self.examples, num_threads=64)
+        results = common.map_with_progress(fn, self.examples)
 
         # Aggregate metrics
         aggregate_metrics = {
