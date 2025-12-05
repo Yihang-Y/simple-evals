@@ -221,7 +221,6 @@ class GenChatCompletionSampler(SamplerBase):
             actual_queried_message_list=message_list,
         )
 
-
 class VLLMChatCompletionSampler(SamplerBase):
     """
     Sample from VLLM's chat completion API
