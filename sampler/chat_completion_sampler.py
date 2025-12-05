@@ -128,10 +128,55 @@ class GenChatCompletionSampler(SamplerBase):
     def _pack_message(self, role: str, content: Any):
         return {"role": str(role), "content": content}
 
+    # def __call__(self, message_list: MessageList) -> SamplerResponse:
+    #     trial = 0
+    #     prompt = message_list[0]["content"]
+    #     while True:
+    #         try:
+    #             response = self.client.models.generate_content(
+    #                 model=self.model,
+    #                 contents=prompt,
+    #                 config=types.GenerateContentConfig(
+    #                     system_instruction=self.system_message,
+    #                     temperature=self.temperature,
+    #                     max_output_tokens=self.max_tokens,
+    #                 ),
+    #             )
+    #             content = response.text
+    #             if content is None:
+    #                 raise ValueError("OpenAI API returned empty response; retrying")
+    #             return SamplerResponse(
+    #                 response_text=content,
+    #                 response_metadata={"usage": None},
+    #                 actual_queried_message_list=
+    #                 # self._pack_message(
+    #                 #     "system", self.system_message
+    #                 # )
+    #                 message_list,
+    #             )
+    #         # NOTE: BadRequestError is triggered once for MMMU, please uncomment if you are reruning MMMU
+    #         except openai.BadRequestError as e:
+    #             print("Bad Request Error", e)
+    #             return SamplerResponse(
+    #                 response_text="No response (bad request).",
+    #                 response_metadata={"usage": None},
+    #                 actual_queried_message_list=message_list,
+    #             )
+    #         except Exception as e:
+    #             exception_backoff = 2**trial  # expontial back off
+    #             print(
+    #                 f"Rate limit exception so wait and retry {trial} after {exception_backoff} sec",
+    #                 e,
+    #             )
+    #             time.sleep(exception_backoff)
+    #             trial += 1
     def __call__(self, message_list: MessageList) -> SamplerResponse:
+        max_retries = 5
         trial = 0
         prompt = message_list[0]["content"]
-        while True:
+
+        while trial < max_retries:
+            print(f"Attempt {trial + 1} to call GenAI API")
             try:
                 response = self.client.models.generate_content(
                     model=self.model,
@@ -142,19 +187,17 @@ class GenChatCompletionSampler(SamplerBase):
                         max_output_tokens=self.max_tokens,
                     ),
                 )
+
                 content = response.text
                 if content is None:
                     raise ValueError("OpenAI API returned empty response; retrying")
+
                 return SamplerResponse(
                     response_text=content,
                     response_metadata={"usage": None},
-                    actual_queried_message_list=
-                    # self._pack_message(
-                    #     "system", self.system_message
-                    # )
-                    message_list,
+                    actual_queried_message_list=message_list,
                 )
-            # NOTE: BadRequestError is triggered once for MMMU, please uncomment if you are reruning MMMU
+
             except openai.BadRequestError as e:
                 print("Bad Request Error", e)
                 return SamplerResponse(
@@ -162,14 +205,21 @@ class GenChatCompletionSampler(SamplerBase):
                     response_metadata={"usage": None},
                     actual_queried_message_list=message_list,
                 )
+
             except Exception as e:
-                exception_backoff = 2**trial  # expontial back off
+                exception_backoff = 2**trial
                 print(
-                    f"Rate limit exception so wait and retry {trial} after {exception_backoff} sec",
-                    e,
+                    f"Rate limit exception. Retry {trial} after {exception_backoff}s", e
                 )
                 time.sleep(exception_backoff)
                 trial += 1
+
+        # 超过重试次数仍失败
+        return SamplerResponse(
+            response_text=f"Failed after {max_retries} retries.",
+            response_metadata={"usage": None},
+            actual_queried_message_list=message_list,
+        )
 
 
 class VLLMChatCompletionSampler(SamplerBase):
